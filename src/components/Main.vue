@@ -1,9 +1,9 @@
 <template>
   <v-container class="px-0 py-0 mb-6">
-    <v-row justify="space-around">
-      <v-card width="400">
+    <v-row>
+      <v-card class="w-100">
         <v-img
-          height="200"
+          height="250"
           src="@/assets/header1.jpg"
           cover
           gradient="to top, rgba(0,0,0,0), rgba(0,0,0,.8)"
@@ -64,7 +64,7 @@
   <v-banner
     lines="three"
     color="deep-purple-accent-4"
-    class="bg-blue-grey-lighten-5 ps-8"
+    class="bg-blue-grey-lighten-5 ps-7 pe-7"
   >
     <template v-slot:prepend>
       <v-avatar size="64px">
@@ -79,15 +79,14 @@
         winner.</span
       >
     </v-banner-text>
-
-    <template v-slot:actions>
-      <div class="d-flex justify-start w-100">
+    <v-banner-actions class="d-flex justify-start justify-sm-end">
+      <div class="d-flex">
         <v-btn
-          color="deep-purple-darken-4"
+          color="deep-purple-accent-4"
           prepend-icon="$check"
           rounded="pill"
-          variant="tonal"
-          class="me-1 px-4"
+          variant="flat"
+          class="me-3 px-4"
         >
           Following
         </v-btn>
@@ -100,98 +99,36 @@
         >
         </v-btn>
       </div>
-    </template>
+    </v-banner-actions>
   </v-banner>
-  <v-container class="px-8 mt-5">
-    <v-row justify="space-between" align="start">
-      <v-col cols="12" sm="12">
-        <h2>Share a reply?</h2>
-      </v-col>
-      <v-col cols="12" sm="12">
-        <div class="d-flex flex-column align-center">
-          <v-textarea
-            variant="filled"
-            auto-grow
-            label="Your message..."
-            rows="4"
-            row-height="30"
-            shaped
-            class="w-100"
-            v-model="comment"
-          >
-            <template v-slot:append-inner>
-              <div class="d-flex flex-column justify-end h-100 pb-2">
-                <v-btn icon="$send" elevation="0" @click="onComment"></v-btn>
-              </div>
-            </template>
-          </v-textarea>
-        </div>
-      </v-col>
-      <v-col cols="12" sm="12">
-        <div
-          class="w-100 d-flex justify-start mb-5 flex-wrap"
-          v-for="(comment, index) in post.comments"
-          :key="comment.username"
-        >
-          <v-avatar size="64px" class="me-5">
-            <v-img alt="Avatar" cover src="@/assets/avatar4.jpeg"></v-img>
-          </v-avatar>
-          <div class="mb-6">
-            <strong>{{ comment.username }}</strong>
-            <div class="d-flex text-grey">
-              <span class="me-1">
-                {{ commentTime[index].hour }} : {{ commentTime[index].minutes }}
-              </span>
-              <p class="me-1">,</p>
-              <span class="me-1">{{ commentTime[index].weekDay }}</span>
-              <p class="me-1">,</p>
-              <span class="me-1"
-                >{{ commentTime[index].year }}/{{ commentTime[index].month }}/{{
-                  commentTime[index].date
-                }}</span
-              >
-            </div>
-          </div>
-          <div class="w-100">
-            <div
-              class="pa-4 bg-blue-grey-lighten-5 rounded-xl rounded-ts-0 text-blue-grey-darken-1"
-            >
-              {{ comment.text }}
-            </div>
-          </div>
-        </div>
-      </v-col>
-    </v-row>
-    <v-snackbar
-      :timeout="2000"
-      :color="successComment.color"
-      rounded="pill"
-      v-model="successComment.show"
-    >
-      {{ successComment.text }}
-    </v-snackbar>
-  </v-container>
+  <comment :comment="comment" :existingComments="post.comments"></comment>
 </template>
 <script>
 import blogService from "../services/blogService";
 import { dateDifference, exactTime } from "../helpers/helper";
+import Comment from "./Comment.vue";
 
 export default {
+  components: {
+    Comment,
+  },
   data() {
     return {
       post: {},
       colors: ["cyan", "deep-purple", "red", "amber"],
       time: {},
-      comment: "",
-      commentTime: [],
+      comment: {
+        text: "",
+        commentTime: [],
+        successComment: {
+          show: false,
+          text: "There is a problem, we can't submit your comment!",
+          color: "error",
+        },
+      },
       id: 2,
       like: false,
       likeIcon: "$outlinedHeart",
-      successComment: {
-        show: false,
-        text: "There is a problem, we can't submit your comment!",
-        color:'error'
-      },
     };
   },
   methods: {
@@ -203,27 +140,14 @@ export default {
           console.log(res.data);
           this.time = dateDifference(Date.now(), this.post.date);
           for (let comment of this.post.comments) {
-            this.commentTime.push(exactTime(comment.date));
+            this.comment.commentTime.push(exactTime(comment.date));
             console.log(exactTime(comment.date));
           }
-          console.log(this.commentTime);
+          console.log(this.comment.commentTime);
         })
         .catch((e) => {
           console.log(e);
         });
-    },
-    onComment() {
-      let comment = {
-        text: this.comment,
-      };
-      console.log(this.comment);
-      blogService.createComment(this.id, comment).then((res) => {
-        if (res.status === 201) {
-          this.successComment.show = true;
-          this.successComment.text = "Your comment submitted successfully.";
-          this.successComment.color = 'success'
-        }
-      });
     },
     onLike() {
       this.like = !this.like;
@@ -232,20 +156,14 @@ export default {
   },
   mounted() {
     this.getPostContent(this.id);
-    // let elements = document.getElementsByClassName("v-col");
-    // console.log(elements)
-    // for (let element of elements) {
-    //   console.log(element)
-    //   element.classList.remove("v-col");
-    // }
   },
 };
 </script>
 <style>
-.book-mark i {
-  color: black;
+.book-mark i.v-icon {
+  color: black !important;
 }
 .v-banner {
-  border: none;
+  border: none !important;
 }
 </style>
